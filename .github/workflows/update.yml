@@ -1,0 +1,39 @@
+name: Update US Proxies
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 0 点（北京时间上午 8:00）自动更新
+  workflow_dispatch:      # 允许在页面上手动点击触发
+
+# 声明写权限，防止 git push 报 exit code 128
+permissions:
+  contents: write
+
+jobs:
+  update-proxies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run Script
+        run: python update_proxies.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add us_proxies.txt
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto update US 8443 proxies"
+          git push
